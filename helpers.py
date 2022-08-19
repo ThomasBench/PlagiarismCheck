@@ -1,9 +1,5 @@
-from lib2to3.pgen2.tokenize import tokenize
-from collections import defaultdict
 import enchant 
 from typing import List
-from tqdm.notebook import tqdm
-from termcolor import colored
 
 
 eng_dict = enchant.Dict("en")
