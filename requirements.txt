@@ -31,7 +31,6 @@ py4j==0.10.9.2
 pyenchant==3.2.2
 Pygments @ file:///opt/conda/conda-bld/pygments_1644249106324/work
 pyrsistent==0.18.1
-pyspark==3.2.0
 python-dateutil @ file:///tmp/build/80754af9/python-dateutil_1626374649649/work
 pytz==2022.2.1
 pywin32==302
