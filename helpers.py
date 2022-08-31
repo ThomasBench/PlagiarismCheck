@@ -12,7 +12,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 import plotly
 from scipy.interpolate import interp1d
-import pyspark
+# import pyspark
 from parameters import ENG_STOPWORDS, N_GRAM, GAP_TOLERANCE, PADDING
 
 eng_dict = enchant.Dict("en")
@@ -125,20 +125,37 @@ def display_match(match_indexes: Tuple[Tuple[int,int],Tuple[int,int]] ,treated_1
 
 
 
-def treat_article(article_path:str, context: pyspark.SparkContext, stopwords: Set[str], n: int) -> Article:
+# def treat_article(article_path:str, context: pyspark.SparkContext, stopwords: Set[str], n: int) -> Article:
+#     with open(article_path, mode = "r", encoding = "utf-8") as f:
+#         data = ''.join(f.readlines())
+#     full_article = ''.join([c for c in data if c.isalnum() or c == " "])
+#     tokenized_article = list(enumerate(word_tokenize(full_article)))
+#     filtered_article = [(index,token.lower()) for index,token in tokenized_article if token not in stopwords ]
+#     filtered_indexes = [index for index,_ in filtered_article]
+#     corrected_article = context.parallelize(filtered_article).map(lambda x: x[1]).map(correct_token).collect()
+#     corrected_article = list(zip(filtered_indexes, corrected_article))
+#     n_grams = list(generate_n_gram(corrected_article, n))
+#     n_gram_dict =defaultdict(list)
+#     for n_gram in n_grams:
+#         n_gram_dict[to_ngram(n_gram)].append(n_gram[0][0])
+#     return tokenized_article, n_gram_dict
+
+def treat_article(article_path:str, stopwords: Set[str], n: int) -> Article:
     with open(article_path, mode = "r", encoding = "utf-8") as f:
         data = ''.join(f.readlines())
     full_article = ''.join([c for c in data if c.isalnum() or c == " "])
     tokenized_article = list(enumerate(word_tokenize(full_article)))
     filtered_article = [(index,token.lower()) for index,token in tokenized_article if token not in stopwords ]
     filtered_indexes = [index for index,_ in filtered_article]
-    corrected_article = context.parallelize(filtered_article).map(lambda x: x[1]).map(correct_token).collect()
+    # corrected_article = context.parallelize(filtered_article).map(lambda x: x[1]).map(correct_token).collect()
+    corrected_article = [correct_token(x) for _, x in filtered_article]
     corrected_article = list(zip(filtered_indexes, corrected_article))
     n_grams = list(generate_n_gram(corrected_article, n))
     n_gram_dict =defaultdict(list)
     for n_gram in n_grams:
         n_gram_dict[to_ngram(n_gram)].append(n_gram[0][0])
     return tokenized_article, n_gram_dict
+
 
 def compute_plagiarism(art_1_path: str, art_2_path: str, show = True) -> Tuple[Callable[[int],str],float] :
 
