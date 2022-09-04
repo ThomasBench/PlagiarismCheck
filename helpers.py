@@ -175,12 +175,21 @@ def compute_plagiarism_from_articles(art_1: Article, art_2: Article, show = True
     glued_sequence = glue_sequence(matching_sequence, GAP_TOLERANCE)
 
     # Create the viewer function 
-    match_viewer = lambda i: display_match(glued_sequence[i], treated_1,treated_2, PADDING)
+    match_viewer = Viewer(glued_sequence, treated_1,treated_2, PADDING)
 
-    # compute the plagiarism score from both articles
-    score = 2*len(matching_sequence)/(len(grams_1) + len(grams_2)) * 100
+    # compute the plagiarism score from both articles  --> Harmonic Mean 
+    average_length = 2/(1/len(grams_1) + 1/ len(grams_2))
+    score = len(matching_sequence)/average_length * 100
+
+
     if show:
-        print("The two articles have a similarity score of {:.2f}, with {} matching n-gram. You can use the viewer to visualize the matching sequences".format(score, len(matching_sequence)))
+        print("The two articles have a similarity score of {:.2f}, with {} matching sequences. You can use the viewer to visualize the matching sequences".format(score, len(glued_sequence)))
+        print("\n--- --- ---\n")
+        print(f"The first article share {len(matching_sequence)/len(grams_1)*100}% of its content with the second")
+        print(f"The second article share {len(matching_sequence)/len(grams_2)*100}% of its content with the first")
+        print("\n--- --- ---\n")
+
+
     return match_viewer, score
 
 def to_rgb(hex:str) -> Tuple[int,int,int]:
@@ -243,3 +252,23 @@ def compute_many_to_many_sim(articles: List[Article], names: List[str], plot = T
         )   
         fig.update_layout(template = "none", width = 800, height = 600, legend_orientation = "h")
         fig.show()
+
+
+class Viewer:
+    def __init__(self,sequence, treated_1, treated_2, padding):
+        self.seq = sequence
+        self.t_1 = treated_1
+        self.t_2 = treated_2
+        self.pad = padding
+    def __getitem__(self,key: slice):
+        if isinstance(key,int):
+            display_match(self.seq[key], self.t_1,self.t_2, self.pad)
+        else:
+            if key.stop > len(self):
+                raise IndexError(f"There is only {len(self)} matching sequences, and you tried to access the {key.stop}th")
+            for k in range(key.start, key.stop):
+                print("\n")
+                print(f"--- Printing matching n°{k} ---")
+                display_match(self.seq[k], self.t_1,self.t_2, self.pad)
+    def __len__(self):
+        return len(self.seq)
