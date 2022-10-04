@@ -14,8 +14,6 @@ import plotly.express as px
 import plotly
 from scipy.interpolate import interp1d
 # import pyspark
-from parameters import ENG_STOPWORDS, N_GRAM, GAP_TOLERANCE, PADDING
-
 eng_dict = enchant.Dict("en")
 N_gram = Tuple[str]
 Article = Tuple[List[Tuple[int,str]],Dict[N_gram,List[int]]]
@@ -144,27 +142,7 @@ def treat_article(article_path:str, stopwords: Set[str], n: int) -> Article:
         n_gram_dict[to_ngram(n_gram)].append(n_gram[0][0])
     return tokenized_article, n_gram_dict
 
-
-def compute_plagiarism(art_1_path: str, art_2_path: str, show = True) -> Tuple[Callable[[int],str],float] :
-
-    # First treat the articles 
-    treated_1, grams_1 = treat_article(art_1_path, SC, ENG_STOPWORDS, N_GRAM)
-    treated_2, grams_2 = treat_article(art_2_path, SC, ENG_STOPWORDS, N_GRAM)
-
-    # Align sequence and glue the sequences 
-    matching_sequence = align_sequences(grams_1,grams_2)
-    glued_sequence = glue_sequence(matching_sequence, GAP_TOLERANCE)
-
-    # Create the viewer function 
-    match_viewer = lambda i: display_match(glued_sequence[i], treated_1,treated_2, PADDING)
-
-    # compute the plagiarism score from both articles
-    score = 2*len(matching_sequence)/(len(treated_1) + len(treated_2)) * 100
-    if show:
-        print("The two articles have a similarity score of {:.2f}, with {} matching n-gram. You can use the viewer to visualize the matching sequences".format(score, len(matching_sequence)))
-    return match_viewer, score
-
-def compute_plagiarism_from_articles(art_1: Article, art_2: Article, show = True) -> Tuple[Callable[[int],str],float]:
+def compute_plagiarism_from_articles(art_1: Article, art_2: Article, show = True, gap_tolerance = 5, padding = 20) -> Tuple[Callable[[int],str],float]:
 
     # First treat the articles 
     treated_1, grams_1 = deepcopy(art_1)
@@ -172,23 +150,23 @@ def compute_plagiarism_from_articles(art_1: Article, art_2: Article, show = True
 
     # Align sequence and glue the sequences 
     matching_sequence = align_sequences(grams_1,grams_2)
-    glued_sequence = glue_sequence(matching_sequence, GAP_TOLERANCE)
-
-    # Create the viewer function 
-    match_viewer = Viewer(glued_sequence, treated_1,treated_2, PADDING)
 
     # compute the plagiarism score from both articles  --> Harmonic Mean 
     average_length = 2/(1/len(grams_1) + 1/ len(grams_2))
     score = len(matching_sequence)/average_length * 100
+    match_viewer = []
+    glued_sequence = []
 
-
+    if len(matching_sequence) != 0:
+        # Create the viewer function 
+        glued_sequence = glue_sequence(matching_sequence, gap_tolerance)
+        match_viewer = Viewer(glued_sequence, treated_1,treated_2, padding)
     if show:
         print("The two articles have a similarity score of {:.2f}, with {} matching sequences. You can use the viewer to visualize the matching sequences".format(score, len(glued_sequence)))
         print("\n--- --- ---\n")
         print(f"The first article share {len(matching_sequence)/len(grams_1)*100}% of its content with the second")
         print(f"The second article share {len(matching_sequence)/len(grams_2)*100}% of its content with the first")
         print("\n--- --- ---\n")
-
 
     return match_viewer, score
 
