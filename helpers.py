@@ -142,7 +142,7 @@ def treat_article(article_path:str, stopwords: Set[str], n: int) -> Article:
         n_gram_dict[to_ngram(n_gram)].append(n_gram[0][0])
     return tokenized_article, n_gram_dict
 
-def compute_plagiarism_from_articles(art_1: Article, art_2: Article, show = True, gap_tolerance = 5, padding = 20) -> Tuple[Callable[[int],str],float]:
+def compute_similarity_from_articles(art_1: Article, art_2: Article, show = True, gap_tolerance = 5, padding = 20) -> Tuple[Callable[[int],str],float]:
 
     # First treat the articles 
     treated_1, grams_1 = deepcopy(art_1)
@@ -151,7 +151,7 @@ def compute_plagiarism_from_articles(art_1: Article, art_2: Article, show = True
     # Align sequence and glue the sequences 
     matching_sequence = align_sequences(grams_1,grams_2)
 
-    # compute the plagiarism score from both articles  --> Harmonic Mean 
+    # compute the similarity score from both articles  --> Harmonic Mean 
     average_length = 2/(1/len(grams_1) + 1/ len(grams_2))
     score = len(matching_sequence)/average_length * 100
     match_viewer = []
@@ -181,7 +181,7 @@ def compute_many_to_many_sim(articles: List[Article], names: List[str], plot = T
     results = pd.DataFrame(columns = names,index = names)
     for i in range(N):
         for j in range(i+1,N):
-            _, sim = compute_plagiarism_from_articles(articles[i], articles[j], show = False)
+            _, sim = compute_similarity_from_articles(articles[i], articles[j], show = False)
             results[names[i]][names[j]] = sim
     
     print(repr(results))
